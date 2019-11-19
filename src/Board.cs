@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Chess
 {
@@ -17,10 +18,12 @@ namespace Chess
             set => _Pieces[y * 8 + x] = value;
         }
 
+        public bool HasCheckmate { get; } = false;
+
         public Piece this[string position]
         {
-            get => this[GetXFromStringPosition(position), GetYFromStringPosition(position)];
-            set => this[GetXFromStringPosition(position), GetYFromStringPosition(position)] = value;
+            get => this[ParseXFromStringPosition(position), ParseYFromStringPosition(position)];
+            set => this[ParseXFromStringPosition(position), ParseYFromStringPosition(position)] = value;
         }
 
         public Board()
@@ -50,7 +53,12 @@ namespace Chess
             this[4, y] = new King(color, 4, y);
         }
 
-        private int GetXFromStringPosition(string position)
+        private (int X, int Y) ParseStringPosition(string position)
+        {
+            return (ParseXFromStringPosition(position), ParseYFromStringPosition(position));
+        }
+
+        private int ParseXFromStringPosition(string position)
         {
             var c = position[0];
             if (c < 'a' || c > 'h')
@@ -58,9 +66,9 @@ namespace Chess
             return c - 'a';
         }
 
-        private int GetYFromStringPosition(string position)
+        private int ParseYFromStringPosition(string position)
         {
-            var c = position[1];
+            var c = position[^1];
             if (c < '1' || c > '8')
                 throw new ArgumentException();
             return c - '1';
@@ -110,26 +118,43 @@ namespace Chess
 
         public void PerformAlgebraicChessNotationMove(Color color, string notation)
         {
-            var pieces = PiecesByColor(color);
-            pieces = notation[0] switch
+            if (notation == "0-0" || notation == "0-0-0")
+                throw new NotImplementedException("castling is not implemented yet");
+
+            var match = Regex.Match(notation, "^(?<piece>[KQRNB]?)(?<sourceX>[a-h]?)(?<sourceY>[1-8]?)(?<captures>x?)(?<destination>[a-h][1-8])(?<promotion>(=[QRNB])?)(?<check>\\+?)(?<mate>#?)$",
+                RegexOptions.Singleline & RegexOptions.ExplicitCapture);
+            if (!match.Success)
+                throw new ArgumentException("cannot parse notation");
+
+            var _pieces = PiecesByColor(color);
+            _pieces = match.Groups["piece"].Value switch
             {
-                'K' => pieces.OfType<King>(),
-                'Q' => pieces.OfType<Queen>(),
-                'R' => pieces.OfType<Rook>(),
-                'B' => pieces.OfType<Bishop>(),
-                'N' => pieces.OfType<Knight>(),
-                _ => pieces.OfType<Pawn>(),
+                "K" => _pieces.OfType<King>(),
+                "Q" => _pieces.OfType<Queen>(),
+                "R" => _pieces.OfType<Rook>(),
+                "B" => _pieces.OfType<Bishop>(),
+                "N" => _pieces.OfType<Knight>(),
+                _ => _pieces.OfType<Pawn>(),
             };
-            pieces = pieces.ToArray();
 
-            var offset = char.IsUpper(notation[0]) ? 1 : 0;
-            var destination = notation.Substring(offset, 2);
-            var x = GetXFromStringPosition(destination);
-            var y = GetYFromStringPosition(destination);
+            (var x, var y) = ParseStringPosition(match.Groups["destination"].Value);
 
-            var piece = pieces.FirstOrDefault(p => p.CanMoveTo(x, y, this));
-            if (piece == default || !TryMovePiece(piece, x, y))
+            var pieces = _pieces.Where(p => p.CanMoveTo(x, y, this)).ToArray();
+            if (!pieces.Any())
                 throw new ArgumentException("no piece can move to this position");
+
+            (var sourceX, var sourceY) = (match.Groups["sourceX"].Value, match.Groups["sourceY"].Value);
+            pieces = pieces.Where(p => (string.IsNullOrEmpty(sourceX) || p.X == ParseXFromStringPosition(sourceX))
+                && (string.IsNullOrEmpty(sourceY) || p.Y == ParseYFromStringPosition(sourceY))).ToArray();
+
+            if (!pieces.Any())
+                throw new ArgumentException("no piece matches the source of movement");
+
+            if (pieces.Count() > 1)
+                throw new ArgumentException("multiple pieces match this notation");
+
+            if (!TryMovePiece(pieces.First(), x, y))
+                throw new ArgumentException("move operation failed");
         }
     }
 }

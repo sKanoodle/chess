@@ -11,16 +11,89 @@ namespace Chess
         static void Main(string[] args)
         {
             Board = new Board();
-            var colorTurn = Color.White;
+            ReplayGame();
+        }
 
-            while (true)
+        private static void ReplayGame()
+        {
+            var moves = new[]
+            {
+                "e4",
+                "d5",
+                "exd5",
+                "Qxd5",
+                "Nc3",
+                "Qa5",
+                "d4",
+                "Nf6",
+                "Nf3",
+                "c6",
+                "Bc4",
+                "Bf5",
+                "Ne5",
+                "e6",
+                "g4",
+                "Bg6",
+                "h4",
+                "Nbd7",
+                "Nxd7",
+                "Nxd7",
+                "h5",
+                "Be4",
+                "Rh3",
+                "Bg2",
+                "Re3",
+                "Nb6",
+                "Bd3",
+                "Nd5",
+                "f3",
+                "Bb4",
+                "Kf2",
+                "Bxc3",
+                "bxc3",
+                "Qxc3",
+                "Rb1",
+                "Qxd4",
+                "Rxb7",
+                "Rd8",
+                "h6",
+                "gxh6",
+                "Bg6",
+                "Ne7",
+                "Qxd4",
+                "Rxd4",
+                "Rd3",
+                "Rd8",
+                "Rxd8+",
+                "Kxd8",
+                "Bd3",
+            };
+            PlayWhatever(i => { Console.ReadKey(false); return moves[i - 1]; });
+        }
+
+        private static void PlayManually()
+        {
+            PlayWhatever(_ => Console.ReadLine());
+        }
+
+        private static void PlayWhatever(Func<int, string> getNextMove)
+        {
+            var colorTurn = Color.White;
+            int turn = 1;
+
+            while (!Board.HasCheckmate)
             {
                 RenderBoard();
-                var nextMove = Console.ReadLine();
+                var nextMove = getNextMove(turn);
                 if (Board.TryPerformAlgebraicChessNotationMove(colorTurn, nextMove))
+                {
                     colorTurn = colorTurn.Invert();
+                    turn += 1;
+                }
             }
-
+            RenderBoard();
+            Console.WriteLine("checkmate");
+            Console.ReadKey(false);
         }
 
         private static void RenderBoard()
