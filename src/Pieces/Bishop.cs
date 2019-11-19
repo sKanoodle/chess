@@ -13,10 +13,7 @@ namespace Chess.Pieces
 
         protected override IEnumerable<(int X, int Y)> GetPossibleMovements(Board board)
         {
-            return MultiplesMovements(1, 1, board)
-                .Concat(MultiplesMovements(1, -1, board))
-                .Concat(MultiplesMovements(-1, 1, board))
-                .Concat(MultiplesMovements(-1, -1, board));
+            return DiagonalMovements(board);
         }
     }
 }

@@ -25,17 +25,32 @@ namespace Chess
 
         private static void RenderBoard()
         {
+            var cols = Enumerable.Range(0, 8).Select(i => (char)(i + 'a')).ToArray();
+            var rows = Enumerable.Range(1, 8).ToArray();
+
             Console.SetCursorPosition(0, 0);
-            for (int y = 7; y >= 0; y--)
+            for (int y = 8; y >= -1; y--)
             {
-                for (int x = 0; x < 8; x++)
+                if (y == 8 || y == -1)
                 {
+                    Console.WriteLine($" {new string(cols)} ");
+                    continue;
+                }
+
+                for (int x = -1; x < 9; x++)
+                {
+                    if (x == -1 || x == 8)
+                    {
+                        Console.Write(rows[y]);
+                        continue;
+                    }
+
                     Console.Write(Board[x, y] switch
                     {
                         null => " ",
                         Pawn _ => "P",
                         Bishop _ => "B",
-                        Knight _ => "K",
+                        Knight _ => "N",
                         Rook _ => "R",
                         Queen _ => "Q",
                         King _ => "K",

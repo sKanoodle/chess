@@ -12,7 +12,7 @@ namespace Chess.Pieces
 
         protected override IEnumerable<(int X, int Y)> GetPossibleMovements(Board board)
         {
-            throw new NotImplementedException();
+            return StraightMovements(board);
         }
     }
 }

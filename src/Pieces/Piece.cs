@@ -53,6 +53,28 @@ namespace Chess.Pieces
             return false;
         }
 
+        protected IEnumerable<(int X, int Y)> AllMovements(Board board, int maxMultiplier = -1)
+        {
+            return DiagonalMovements(board, maxMultiplier)
+                .Concat(StraightMovements(board, maxMultiplier));
+        }
+
+        protected IEnumerable<(int X, int Y)> DiagonalMovements(Board board, int maxMultiplier = -1)
+        {
+            return MultiplesMovements(1, 1, board, maxMultiplier)
+                .Concat(MultiplesMovements(1, -1, board, maxMultiplier))
+                .Concat(MultiplesMovements(-1, 1, board, maxMultiplier))
+                .Concat(MultiplesMovements(-1, -1, board, maxMultiplier));
+        }
+
+        protected IEnumerable<(int X, int Y)> StraightMovements(Board board, int maxMultiplier = -1)
+        {
+            return MultiplesMovements(1, 0, board, maxMultiplier)
+                .Concat(MultiplesMovements(-1, 0, board, maxMultiplier))
+                .Concat(MultiplesMovements(0, 1, board, maxMultiplier))
+                .Concat(MultiplesMovements(0, -1, board, maxMultiplier));
+        }
+
         protected IEnumerable<(int X, int Y)> MultiplesMovements(int deltaX, int deltaY, Board board, int maxMultiplier = -1)
         {
             int multiplier = 1;
