@@ -113,12 +113,19 @@ namespace Chess
 
                 for (int x = -1; x < 9; x++)
                 {
+                    if (x == 8)
+                    {
+                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.BackgroundColor = ConsoleColor.Black;
+                    }
                     if (x == -1 || x == 8)
                     {
                         Console.Write(rows[y]);
                         continue;
                     }
 
+                    Console.BackgroundColor = (x % 2 == 0) ^ (y % 2 == 0) ? ConsoleColor.Green : ConsoleColor.DarkGreen;
+                    Console.ForegroundColor = Board[x, y]?.Color == Color.Black ? ConsoleColor.Black : ConsoleColor.Gray;
                     Console.Write(Board[x, y] switch
                     {
                         null => " ",
