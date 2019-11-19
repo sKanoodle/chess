@@ -11,7 +11,7 @@ namespace Chess
     {
         private readonly Piece[] _Pieces = new Piece[64];
         public IEnumerable<Piece> Pieces => _Pieces.Where(p => p != default);
-        private IEnumerable<Piece> PiecesByColor(Color color) => Pieces.Where(p => p.Color == color);
+        public IEnumerable<Piece> PiecesByColor(Color color) => Pieces.Where(p => p.Color == color);
         public Piece this[int x, int y]
         {
             get => _Pieces[y * 8 + x];
@@ -24,6 +24,11 @@ namespace Chess
         {
             get => this[ParseXFromStringPosition(position), ParseYFromStringPosition(position)];
             set => this[ParseXFromStringPosition(position), ParseYFromStringPosition(position)] = value;
+        }
+
+        private Board(Piece[] pieces)
+        {
+            _Pieces = pieces;
         }
 
         public Board()
@@ -74,11 +79,20 @@ namespace Chess
             return c - '1';
         }
 
+        public Board PreviewMove(Piece piece, int x, int y)
+        {
+            // only move piece in array, dont modify position in piece (piece in copied array is still the same piece as in source array)
+            // should be no problem, because all relevant checks that this is used for only rely on position in array
+            var result = new Board(_Pieces.ToArray());
+            result[piece.X, piece.Y] = default;
+            result[x, y] = piece;
+            return result;
+        }
+
         public bool TryMovePiece(Piece piece, int x, int y)
         {
+            // TODO: missing castling
             if (!piece.CanMoveTo(x, y, this))
-                return false;
-            if (piece is King king && CouldPieceCaptureAt(king.Color.Invert(), x, y)) // TODO: missing castling
                 return false;
             if (this[x, y] != default)
                 CapturePiece(this[x, y]);
@@ -98,7 +112,7 @@ namespace Chess
             piece.MoveTo(x, y);
         }
 
-        private bool CouldPieceCaptureAt(Color color, int x, int y)
+        public bool CouldPieceCaptureAt(Color color, int x, int y)
         {
             return PiecesByColor(color).Any(p => p.CanMoveTo(x, y, this));
         }

@@ -45,11 +45,18 @@ namespace Chess.Pieces
 
         public bool CanMoveTo(int x, int y, Board board)
         {
-            var movements = GetPossibleMovements(board).ToArray();
-
             foreach (var movement in GetPossibleMovements(board))
                 if (movement.X == x && movement.Y == y)
+                {
+                    // prevent king from being moved into mate
+                    if (this is King && board.CouldPieceCaptureAt(Color.Invert(), x, y))
+                        return false;
+                    var king = board.PiecesByColor(Color).OfType<King>().Single();
+                    // prevent move if it would put own king into mate
+                    if (board.PreviewMove(this, x, y).CouldPieceCaptureAt(Color.Invert(), king.X, king.Y))
+                        return false;
                     return true;
+                }
             return false;
         }
 
