@@ -81,7 +81,8 @@ namespace Chess
             var colorTurn = Color.White;
             int turn = 1;
 
-            while (!Board.HasCheckmate)
+            Color loser;
+            while (!Board.IsAnyoneInCheckmate(out loser))
             {
                 RenderBoard();
                 var nextMove = getNextMove(turn);
@@ -92,7 +93,7 @@ namespace Chess
                 }
             }
             RenderBoard();
-            Console.WriteLine("checkmate");
+            Console.WriteLine($"checkmate, {loser.Invert()} won!");
             Console.ReadKey(false);
         }
 

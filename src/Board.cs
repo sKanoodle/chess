@@ -12,13 +12,12 @@ namespace Chess
         private readonly Piece[] _Pieces = new Piece[64];
         public IEnumerable<Piece> Pieces => _Pieces.Where(p => p != default);
         public IEnumerable<Piece> PiecesByColor(Color color) => Pieces.Where(p => p.Color == color);
+        public King KingOfColor(Color color) => PiecesByColor(color).OfType<King>().Single();
         public Piece this[int x, int y]
         {
             get => _Pieces[y * 8 + x];
             set => _Pieces[y * 8 + x] = value;
         }
-
-        public bool HasCheckmate { get; } = false;
 
         public Piece this[string position]
         {
@@ -56,6 +55,20 @@ namespace Chess
                 this[x, y] = new Bishop(color, x, y);
             this[3, y] = new Queen(color, 3, y);
             this[4, y] = new King(color, 4, y);
+        }
+
+        public bool IsAnyoneInCheck(out Color color)
+        {
+            if (KingOfColor(color = Color.White).IsInCheck(this))
+                return true;
+            return KingOfColor(color = Color.Black).IsInCheck(this);
+        }
+
+        public bool IsAnyoneInCheckmate(out Color color)
+        {
+            if (KingOfColor(color = Color.White).IsInCheckmate(this))
+                return true;
+            return KingOfColor(color = Color.Black).IsInCheckmate(this);
         }
 
         private (int X, int Y) ParseStringPosition(string position)

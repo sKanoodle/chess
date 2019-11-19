@@ -51,7 +51,7 @@ namespace Chess.Pieces
                     // prevent king from being moved into mate
                     if (this is King && board.CouldPieceCaptureAt(Color.Invert(), x, y))
                         return false;
-                    var king = board.PiecesByColor(Color).OfType<King>().Single();
+                    var king = board.KingOfColor(Color);
                     // prevent move if it would put own king into mate
                     if (board.PreviewMove(this, x, y).CouldPieceCaptureAt(Color.Invert(), king.X, king.Y))
                         return false;
@@ -60,12 +60,18 @@ namespace Chess.Pieces
             return false;
         }
 
+        /// <summary>
+        /// checks for bounds, occupied fields (can move onto enemy unit) and gives movements that pass those checks
+        /// </summary>
         protected IEnumerable<(int X, int Y)> AllMovements(Board board, int maxMultiplier = -1)
         {
             return DiagonalMovements(board, maxMultiplier)
                 .Concat(StraightMovements(board, maxMultiplier));
         }
 
+        /// <summary>
+        /// checks for bounds, occupied fields (can move onto enemy unit) and gives movements that pass those checks
+        /// </summary>
         protected IEnumerable<(int X, int Y)> DiagonalMovements(Board board, int maxMultiplier = -1)
         {
             return MultiplesMovements(1, 1, board, maxMultiplier)
@@ -74,6 +80,9 @@ namespace Chess.Pieces
                 .Concat(MultiplesMovements(-1, -1, board, maxMultiplier));
         }
 
+        /// <summary>
+        /// checks for bounds, occupied fields (can move onto enemy unit) and gives movements that pass those checks
+        /// </summary>
         protected IEnumerable<(int X, int Y)> StraightMovements(Board board, int maxMultiplier = -1)
         {
             return MultiplesMovements(1, 0, board, maxMultiplier)
@@ -82,6 +91,9 @@ namespace Chess.Pieces
                 .Concat(MultiplesMovements(0, -1, board, maxMultiplier));
         }
 
+        /// <summary>
+        /// checks for bounds, occupied fields (can move onto enemy unit) and gives movements that pass those checks
+        /// </summary>
         protected IEnumerable<(int X, int Y)> MultiplesMovements(int deltaX, int deltaY, Board board, int maxMultiplier = -1)
         {
             int multiplier = 1;
@@ -89,12 +101,12 @@ namespace Chess.Pieces
             while ((maxMultiplier < 0 || multiplier <= maxMultiplier) && IsInBounds(newX = X + deltaX * multiplier, newY = Y + deltaY * multiplier))
             {
                 if (board[newX, newY] == default)
-                    yield return (newX, newY);
+                    yield return (newX, newY); // destination is empty, can move
                 else
                 {
                     if (board[newX, newY].Color != Color)
-                        yield return (newX, newY);
-                    break;
+                        yield return (newX, newY); // destination is occupied, but piece can be captured there
+                    break; // destination was not empty, so we can not move farther beyond
                 }
 
                 multiplier += 1;
