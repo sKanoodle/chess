@@ -107,7 +107,28 @@ namespace Chess
 
         public bool TryMovePiece(Piece piece, int x, int y)
         {
-            // TODO: missing castling
+            if (piece is King king && y == king.Y && (x == king.X - 2 || x == king.X + 2)) // castling requested
+            {
+                if (king.HasMoved || king.IsInCheck(this))
+                    return false; // king may not castle when in check or has moved
+                var rook = this[x > 4 ? 7 : 0, y];
+                if (!(rook is Rook) || rook.HasMoved)
+                    return false; // there is no rook where a rook should be or it has moved TODO: handicap games would allow castling without a rook
+                var squaresBetween = Enumerable.Range(Math.Min(rook.X, king.X) + 1, rook.X == 0 ? 3 : 2); // if rook.X is 0 it will be a queen-side castle
+                foreach (var _x in squaresBetween)
+                    if (this[_x, y] != default)
+                        return false; // there may not be any pieces between king and rook
+                var kingMovementSquares = Enumerable.Range(Math.Min(rook.X + 1, king.X) + 1, 2); // rook.X + 1 to adjust for queen-side castling
+                foreach (var _x in kingMovementSquares)
+                    if (CouldPieceCaptureAt(king.Color.Invert(), _x, y))
+                        return false; // king may not move through or into check
+
+                int rookDestinationX = king.X + (rook.X < king.X ? -1 : 1);
+                MovePiece(rook, rookDestinationX, y);
+                MovePiece(king, x, y);
+                return true;
+            }
+
             if (!piece.CanMoveTo(x, y, this))
                 return false;
             if (this[x, y] != default)
@@ -148,10 +169,18 @@ namespace Chess
             return true;
         }
 
+        private const string KingSideCastle = "0-0";
+        private const string QueenSideCastle = "0-0-0";
+
         public void PerformAlgebraicChessNotationMove(Color color, string notation)
         {
-            if (notation == "0-0" || notation == "0-0-0")
-                throw new NotImplementedException("castling is not implemented yet");
+            if (notation == KingSideCastle || notation == QueenSideCastle)
+            {
+                var piece = KingOfColor(color);
+                if (!TryMovePiece(piece, piece.X + (notation == KingSideCastle ? 2 : -2), piece.Y))
+                    throw new ArgumentException("castling failed");
+                return;
+            }
 
             var match = Regex.Match(notation, "^(?<piece>[KQRNB]?)(?<sourceX>[a-h]?)(?<sourceY>[1-8]?)(?<captures>x?)(?<destination>[a-h][1-8])(?<promotion>(=[QRNB])?)(?<check>\\+?)(?<mate>#?)$",
                 RegexOptions.Singleline & RegexOptions.ExplicitCapture);

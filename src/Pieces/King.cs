@@ -23,7 +23,8 @@ namespace Chess.Pieces
 
         public bool IsInCheckmate(Board board)
         {
-            // TODO: what about castling to get out of check?
+            // TODO: it would also be possible to capture pieces or block their way to get out of check and prevent checkmate
+            // king can not castle to get out of check
             if (!IsInCheck(board))
                 return false; // if not in check no movement is required to prevent checkmate
             foreach (var movement in GetPossibleMovements(board))

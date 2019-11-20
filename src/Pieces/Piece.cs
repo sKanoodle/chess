@@ -11,7 +11,7 @@ namespace Chess.Pieces
         public int X { get; private set; } // col
         public int Y { get; private set; } // row
         public Color Color { get; }
-        protected bool HasMoved { get; private set; } = false;
+        public bool HasMoved { get; private set; } = false;
 
         public string Rank => (Y + 1).ToString();
         public string File => X switch
