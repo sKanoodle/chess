@@ -19,6 +19,9 @@ namespace Chess
             set => _Pieces[y * 8 + x] = value;
         }
 
+        public (int X, int Y) LastMoveOrigin { get; private set; } = (-1, -1);
+        public (int X, int Y) LastMoveDestination { get; private set; } = (-1, -1);
+
         public Piece this[string position]
         {
             get => this[ParseXFromStringPosition(position), ParseYFromStringPosition(position)];
@@ -120,6 +123,8 @@ namespace Chess
 
         private void MovePiece(Piece piece, int x, int y)
         {
+            LastMoveOrigin = (piece.X, piece.Y);
+            LastMoveDestination = (x, y);
             this[piece.X, piece.Y] = default;
             this[x, y] = piece;
             piece.MoveTo(x, y);

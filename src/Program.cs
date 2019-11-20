@@ -124,7 +124,10 @@ namespace Chess
                         continue;
                     }
 
-                    Console.BackgroundColor = (x % 2 == 0) ^ (y % 2 == 0) ? ConsoleColor.Green : ConsoleColor.DarkGreen;
+                    if (Board.LastMoveOrigin == (x, y) || Board.LastMoveDestination == (x, y))
+                        Console.BackgroundColor = ConsoleColor.Red;
+                    else
+                        Console.BackgroundColor = (x % 2 == 0) ^ (y % 2 == 0) ? ConsoleColor.Green : ConsoleColor.DarkGreen;
                     Console.ForegroundColor = Board[x, y]?.Color == Color.Black ? ConsoleColor.Black : ConsoleColor.Gray;
                     Console.Write(Board[x, y] switch
                     {
