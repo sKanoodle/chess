@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Chess.Pieces
 {
-    enum Color
+    public enum Color
     {
         Black,
         White,
     }
 
-    static class ColorExtensions
+    public static class ColorExtensions
     {
         public static Color Invert(this Color color)
         {

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Chess.Pieces
 {
-    class Rook : Piece
+    public class Rook : Piece
     {
         public Rook(Color color, int x, int y) : base(color, x, y)
         {

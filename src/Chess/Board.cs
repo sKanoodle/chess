@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace Chess
 {
-    class Board
+    public class Board
     {
         private readonly Piece[] _Pieces = new Piece[64];
         public IEnumerable<Piece> Pieces => _Pieces.Where(p => p != default);
@@ -16,7 +16,7 @@ namespace Chess
         public Piece this[int x, int y]
         {
             get => _Pieces[y * 8 + x];
-            set => _Pieces[y * 8 + x] = value;
+            protected set => _Pieces[y * 8 + x] = value;
         }
 
         public (int X, int Y) LastMoveOrigin { get; private set; } = (-1, -1);
@@ -28,12 +28,18 @@ namespace Chess
             set => this[ParseXFromStringPosition(position), ParseYFromStringPosition(position)] = value;
         }
 
-        private Board(Piece[] pieces)
+        protected Board(Piece[] pieces)
         {
-            _Pieces = pieces;
+            if (pieces != default)
+                _Pieces = pieces;
         }
 
         public Board()
+        {
+            BuildStartingBoard();
+        }
+
+        protected void BuildStartingBoard()
         {
             BuildPawnLine(1, Color.White);
             BuildOtherLine(0, Color.White);

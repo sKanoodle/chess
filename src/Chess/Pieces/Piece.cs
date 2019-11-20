@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Chess.Pieces
 {
-    abstract class Piece
+    public abstract class Piece
     {
         // bottom left field is 0:0
         public int X { get; private set; } // col
