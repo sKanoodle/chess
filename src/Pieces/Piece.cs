@@ -46,7 +46,7 @@ namespace Chess.Pieces
         public bool CanMoveTo(int x, int y, Board board)
         {
             foreach (var movement in GetPossibleMovements(board))
-                if (movement.X == x && movement.Y == y)
+                if (movement == (x, y))
                 {
                     // prevent king from being moved into mate
                     if (this is King && board.CouldPieceCaptureAt(Color.Invert(), x, y))
