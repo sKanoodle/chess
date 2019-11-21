@@ -49,11 +49,11 @@ namespace Chess.Pieces
                 if (movement == (x, y))
                 {
                     // prevent king from being moved into mate
-                    if (this is King && board.CouldPieceCaptureAt(Color.Invert(), x, y))
+                    if (this is King && board.GetPiecesThatCouldMoveTo(Color.Invert(), x, y).Any())
                         return false;
                     var king = board.KingOfColor(Color);
                     // prevent move if it would put own king into mate
-                    if (board.PreviewMove(this, x, y).CouldPieceCaptureAt(Color.Invert(), king.X, king.Y))
+                    if (board.PreviewMove(this, x, y).GetPiecesThatCouldMoveTo(Color.Invert(), king.X, king.Y).Any())
                         return false;
                     return true;
                 }

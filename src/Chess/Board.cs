@@ -68,9 +68,9 @@ namespace Chess
 
         public bool IsAnyoneInCheck(out Color color)
         {
-            if (KingOfColor(color = Color.White).IsInCheck(this))
+            if (KingOfColor(color = Color.White).IsInCheck(this, out _))
                 return true;
-            return KingOfColor(color = Color.Black).IsInCheck(this);
+            return KingOfColor(color = Color.Black).IsInCheck(this, out _);
         }
 
         public bool IsAnyoneInCheckmate(out Color color)
@@ -115,7 +115,7 @@ namespace Chess
         {
             if (piece is King king && y == king.Y && (x == king.X - 2 || x == king.X + 2)) // castling requested
             {
-                if (king.HasMoved || king.IsInCheck(this))
+                if (king.HasMoved || king.IsInCheck(this, out _))
                     return false; // king may not castle when in check or has moved
                 var rook = this[x > 4 ? 7 : 0, y];
                 if (!(rook is Rook) || rook.HasMoved)
@@ -126,7 +126,7 @@ namespace Chess
                         return false; // there may not be any pieces between king and rook
                 var kingMovementSquares = Enumerable.Range(Math.Min(rook.X + 1, king.X) + 1, 2); // rook.X + 1 to adjust for queen-side castling
                 foreach (var _x in kingMovementSquares)
-                    if (CouldPieceCaptureAt(king.Color.Invert(), _x, y))
+                    if (GetPiecesThatCouldMoveTo(king.Color.Invert(), _x, y).Any())
                         return false; // king may not move through or into check
 
                 int rookDestinationX = king.X + (rook.X < king.X ? -1 : 1);
@@ -157,9 +157,11 @@ namespace Chess
             piece.MoveTo(x, y);
         }
 
-        public bool CouldPieceCaptureAt(Color color, int x, int y)
+        public IEnumerable<Piece> GetPiecesThatCouldMoveTo(Piece piece) => GetPiecesThatCouldMoveTo(piece.Color.Invert(), piece.X, piece.Y);
+
+        public IEnumerable<Piece> GetPiecesThatCouldMoveTo(Color color, int x, int y)
         {
-            return PiecesByColor(color).Any(p => p.CanMoveTo(x, y, this));
+            return PiecesByColor(color).Where(p => p.CanMoveTo(x, y, this));
         }
 
         public bool TryPerformAlgebraicChessNotationMove(Color color, string notation)

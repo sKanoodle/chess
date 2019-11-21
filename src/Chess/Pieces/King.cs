@@ -16,21 +16,57 @@ namespace Chess.Pieces
             return AllMovements(board, 1);
         }
 
-        public bool IsInCheck(Board board)
+        public bool IsInCheck(Board board, out Piece[] checkingPieces)
         {
-            return board.CouldPieceCaptureAt(Color.Invert(), X, Y);
+            checkingPieces = board.GetPiecesThatCouldMoveTo(this).ToArray();
+            return checkingPieces.Length > 0;
         }
 
         public bool IsInCheckmate(Board board)
         {
-            // TODO: it would also be possible to capture pieces or block their way to get out of check and prevent checkmate
             // king can not castle to get out of check
-            if (!IsInCheck(board))
+            if (!IsInCheck(board, out var checkingPieces))
                 return false; // if not in check no movement is required to prevent checkmate
+
             foreach (var movement in GetPossibleMovements(board))
-                if (!board.CouldPieceCaptureAt(Color.Invert(), movement.X, movement.Y))
+                if (!board.GetPiecesThatCouldMoveTo(Color.Invert(), movement.X, movement.Y).Any())
                     return false; // king could safely move here
-            return true;
+
+            if (checkingPieces.Length > 1)
+                return true; // king could not move away from check, there is no way to block or capture multiple checking pieces
+
+            var checkingPiece = checkingPieces.First();
+
+            if (board.GetPiecesThatCouldMoveTo(checkingPiece).Any())
+                return false; // checking piece could be captured, thus removing the check
+
+            if (checkingPiece is Knight)
+                return true; // knights move cant be blocked
+
+            if (checkingPiece is Pawn || checkingPiece is King)
+                return false; // those should be handled by king itself
+
+            // get empty fields between checking piece and king that could be blocked to remove check
+            var travelOverFields = Enumerable.Empty<(int X, int Y)>();
+            if (checkingPiece is Rook || checkingPiece is Queen)
+            {
+                int count = Math.Max(Math.Abs(checkingPiece.X - X), Math.Abs(checkingPiece.Y - Y)) - 1;
+                travelOverFields = travelOverFields.Concat(checkingPiece.X == X
+                    ? Enumerable.Range(Math.Min(checkingPiece.Y, Y) + 1, count).Select(y => (X, y))
+                    : Enumerable.Range(Math.Min(checkingPiece.X, X) + 1, count).Select(x => (x, Y)));
+            }
+            if (checkingPiece is Bishop || checkingPiece is Queen)
+            {
+                int count = Math.Abs(checkingPiece.Y - Y) - 1;
+                var xValues = Enumerable.Range(Math.Min(checkingPiece.X, X) + 1, count);
+                var yValues = Enumerable.Range(Math.Min(checkingPiece.Y, Y) + 1, count);
+                travelOverFields = travelOverFields.Concat(xValues.Zip(yValues, (x, y) => (x, y)));
+            }
+            foreach (var tile in travelOverFields)
+                if (board.GetPiecesThatCouldMoveTo(Color, tile.X, tile.Y).Any())
+                    return false; // piece can move between king and checking piece
+
+            return true; // we tried everything to remove check, but there is nothing we can do
         }
     }
 }
