@@ -67,6 +67,7 @@ namespace Chess
                 "Rxd8+",
                 "Kxd8",
                 "Bd3",
+                "1-0",
             };
             PlayWhatever(i => { Console.ReadKey(false); return moves[i - 1]; });
         }
@@ -81,8 +82,7 @@ namespace Chess
             var colorTurn = Color.White;
             int turn = 1;
 
-            Color loser;
-            while (!Board.IsAnyoneInCheckmate(out loser))
+            while (!Board.CheckForEndOfGame())
             {
                 RenderBoard();
                 var nextMove = getNextMove(turn);
@@ -93,7 +93,7 @@ namespace Chess
                 }
             }
             RenderBoard();
-            Console.WriteLine($"checkmate, {loser.Invert()} won!");
+            Console.WriteLine($"{Board.Winner} won!");
             Console.ReadKey(false);
         }
 

@@ -22,6 +22,10 @@ namespace Chess
         public (int X, int Y) LastMoveOrigin { get; private set; } = (-1, -1);
         public (int X, int Y) LastMoveDestination { get; private set; } = (-1, -1);
 
+        public Color? Winner { get; private set; }
+        public bool IsDraw { get; private set; }
+        public bool IsGameOver => IsDraw || Winner != default;
+
         public Piece this[string position]
         {
             get => this[ParseXFromStringPosition(position), ParseYFromStringPosition(position)];
@@ -64,6 +68,11 @@ namespace Chess
                 this[x, y] = new Bishop(color, x, y);
             this[3, y] = new Queen(color, 3, y);
             this[4, y] = new King(color, 4, y);
+        }
+
+        public void Surrender(Color color)
+        {
+            Winner = color.Invert();
         }
 
         public bool IsAnyoneInCheck(out Color color)
@@ -157,6 +166,17 @@ namespace Chess
             piece.MoveTo(x, y);
         }
 
+        public bool CheckForEndOfGame()
+        {
+            if (IsGameOver) return true;
+            if (IsAnyoneInCheckmate(out var loser))
+            {
+                Winner = loser.Invert();
+                return true;
+            }
+            return false;
+        }
+
         public IEnumerable<Piece> GetPiecesThatCouldMoveTo(Piece piece) => GetPiecesThatCouldMoveTo(piece.Color.Invert(), piece.X, piece.Y);
 
         public IEnumerable<Piece> GetPiecesThatCouldMoveTo(Color color, int x, int y)
@@ -179,9 +199,19 @@ namespace Chess
 
         private const string KingSideCastle = "0-0";
         private const string QueenSideCastle = "0-0-0";
+        private const string WhiteWon = "1-0";
+        private const string BlackWon = "0-1";
+        private const string Draw = "½-½";
 
         public void PerformAlgebraicChessNotationMove(Color color, string notation)
         {
+            if (notation == WhiteWon)
+                Winner = Color.White;
+            if (notation == BlackWon)
+                Winner = Color.Black;
+            if (notation == Draw)
+                IsDraw = true;
+
             if (notation == KingSideCastle || notation == QueenSideCastle)
             {
                 var piece = KingOfColor(color);
