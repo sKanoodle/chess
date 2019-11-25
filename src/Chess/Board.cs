@@ -197,25 +197,28 @@ namespace Chess
             return true;
         }
 
-        private const string KingSideCastle = "0-0";
-        private const string QueenSideCastle = "0-0-0";
+        private readonly string[] KingSideCastle = new[] { "0-0", "O-O" };
+        private readonly string[] QueenSideCastle = new[] { "0-0-0", "O-O-O" };
         private const string WhiteWon = "1-0";
         private const string BlackWon = "0-1";
         private const string Draw = "½-½";
 
         public void PerformAlgebraicChessNotationMove(Color color, string notation)
         {
-            if (notation == WhiteWon)
-                Winner = Color.White;
-            if (notation == BlackWon)
-                Winner = Color.Black;
-            if (notation == Draw)
-                IsDraw = true;
+            if (notation == WhiteWon || notation == BlackWon || notation == Draw)
+            {
+                switch (notation)
+                {
+                    case WhiteWon: Winner = Color.White; return;
+                    case BlackWon: Winner = Color.Black; return;
+                    case Draw: IsDraw = true; return;
+                }
+            }
 
-            if (notation == KingSideCastle || notation == QueenSideCastle)
+            if (KingSideCastle.Contains(notation) || QueenSideCastle.Contains(notation))
             {
                 var piece = KingOfColor(color);
-                if (!TryMovePiece(piece, piece.X + (notation == KingSideCastle ? 2 : -2), piece.Y))
+                if (!TryMovePiece(piece, piece.X + (KingSideCastle.Contains(notation) ? 2 : -2), piece.Y))
                     throw new ArgumentException("castling failed");
                 return;
             }
