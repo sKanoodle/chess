@@ -166,6 +166,18 @@ namespace Chess
             piece.MoveTo(x, y);
         }
 
+        public void PromotePawn(Piece piece)
+        {
+            var pawn = this[piece.X, piece.Y];
+            if (pawn == default || pawn.Color != piece.Color
+                || pawn.Color == Color.White && pawn.Y != 7
+                || pawn.Color == Color.Black && pawn.Y != 0)
+                return; // there is no pawn or pawn has wrong position/color
+            if (piece is King || piece is Pawn)
+                return; // cannot promote to king or pawn
+            this[piece.X, piece.Y] = piece;
+        }
+
         public bool CheckForEndOfGame()
         {
             if (IsGameOver) return true;
@@ -259,8 +271,16 @@ namespace Chess
             if (!TryMovePiece(pieces.First(), x, y))
                 throw new ArgumentException("move operation failed");
 
-            if (!string.IsNullOrEmpty(match.Groups["promotion"].Value))
-                throw new NotImplementedException("promotion not implemented");
+            var promotion = match.Groups["promotion"].Value;
+            if (!string.IsNullOrEmpty(promotion))
+                PromotePawn(promotion[1] switch
+                {
+                    'Q' => new Queen(color, x, y),
+                    'R' => new Rook(color, x, y),
+                    'N' => new Knight(color, x, y),
+                    'B' => new Bishop(color, x, y),
+                    _ => throw new ArgumentException("promotion to this piece is not defined")
+                });
         }
     }
 }
