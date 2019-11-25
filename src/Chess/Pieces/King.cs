@@ -18,7 +18,7 @@ namespace Chess.Pieces
 
         public bool IsInCheck(Board board, out Piece[] checkingPieces)
         {
-            checkingPieces = board.GetPiecesThatCouldMoveTo(this).ToArray();
+            checkingPieces = board.GetPiecesThatCouldMoveTo(this, true).ToArray();
             return checkingPieces.Length > 0;
         }
 
@@ -29,7 +29,7 @@ namespace Chess.Pieces
                 return false; // if not in check no movement is required to prevent checkmate
 
             foreach (var movement in GetPossibleMovements(board))
-                if (!board.PreviewMove(this, movement.X, movement.Y).GetPiecesThatCouldMoveTo(Color.Invert(), movement.X, movement.Y).Any())
+                if (!board.PreviewMove(this, movement.X, movement.Y).GetPiecesThatCouldMoveTo(Color.Invert(), movement.X, movement.Y, true).Any())
                     return false; // king could safely move here
 
             if (checkingPieces.Length > 1)

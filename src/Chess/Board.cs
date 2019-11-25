@@ -135,7 +135,7 @@ namespace Chess
                         return false; // there may not be any pieces between king and rook
                 var kingMovementSquares = Enumerable.Range(Math.Min(rook.X + 1, king.X) + 1, 2); // rook.X + 1 to adjust for queen-side castling
                 foreach (var _x in kingMovementSquares)
-                    if (GetPiecesThatCouldMoveTo(king.Color.Invert(), _x, y).Any())
+                    if (PreviewMove(king, _x, y).GetPiecesThatCouldMoveTo(king.Color.Invert(), _x, y, true).Any())
                         return false; // king may not move through or into check
 
                 int rookDestinationX = king.X + (rook.X < king.X ? -1 : 1);
@@ -177,11 +177,12 @@ namespace Chess
             return false;
         }
 
-        public IEnumerable<Piece> GetPiecesThatCouldMoveTo(Piece piece) => GetPiecesThatCouldMoveTo(piece.Color.Invert(), piece.X, piece.Y);
+        public IEnumerable<Piece> GetPiecesThatCouldMoveTo(Piece piece, bool isOnlyCheckDetection = false) =>
+            GetPiecesThatCouldMoveTo(piece.Color.Invert(), piece.X, piece.Y, isOnlyCheckDetection);
 
-        public IEnumerable<Piece> GetPiecesThatCouldMoveTo(Color color, int x, int y)
+        public IEnumerable<Piece> GetPiecesThatCouldMoveTo(Color color, int x, int y, bool isOnlyCheckDetection = false)
         {
-            return PiecesByColor(color).Where(p => p.CanMoveTo(x, y, this));
+            return PiecesByColor(color).Where(p => p.CanMoveTo(x, y, this, isOnlyCheckDetection));
         }
 
         public bool TryPerformAlgebraicChessNotationMove(Color color, string notation)
@@ -257,6 +258,9 @@ namespace Chess
 
             if (!TryMovePiece(pieces.First(), x, y))
                 throw new ArgumentException("move operation failed");
+
+            if (!string.IsNullOrEmpty(match.Groups["promotion"].Value))
+                throw new NotImplementedException("promotion not implemented");
         }
     }
 }

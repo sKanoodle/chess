@@ -43,19 +43,22 @@ namespace Chess.Pieces
             HasMoved = true;
         }
 
-        public bool CanMoveTo(int x, int y, Board board)
+        public bool CanMoveTo(int x, int y, Board board, bool isOnlyCheckDetection = false)
         {
             foreach (var movement in GetPossibleMovements(board))
                 if (movement == (x, y))
                 {
+                    if (isOnlyCheckDetection)
+                        return true; // pieces can check the enemy king without actually being allowed to move there, because that would check their own king
+
                     // prevent king from being moved into mate
                     if (this is King)
-                        return !board.PreviewMove(this, x, y).GetPiecesThatCouldMoveTo(Color.Invert(), x, y).Any(); // next check is only for pieces that are not the king, so we can return here
+                        return !board.PreviewMove(this, x, y).GetPiecesThatCouldMoveTo(Color.Invert(), x, y, true).Any(); // next check is only for pieces that are not the king, so we can return here
 
                     var king = board.KingOfColor(Color);
                     // prevent move if it would put own king into mate
                     // we can use king's coordinates here, because this will never check the king's movement
-                    if (board.PreviewMove(this, x, y).GetPiecesThatCouldMoveTo(Color.Invert(), king.X, king.Y).Any())
+                    if (board.PreviewMove(this, x, y).GetPiecesThatCouldMoveTo(Color.Invert(), king.X, king.Y, true).Any())
                         return false;
                     return true;
                 }
