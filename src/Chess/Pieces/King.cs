@@ -48,19 +48,19 @@ namespace Chess.Pieces
 
             // get empty fields between checking piece and king that could be blocked to remove check
             var travelOverFields = Enumerable.Empty<(int X, int Y)>();
-            if (checkingPiece is Rook || checkingPiece is Queen)
+            if (checkingPiece is Rook || checkingPiece is Queen && (checkingPiece.X == X || checkingPiece.Y == Y)) // only check queen if it would move like a rook
             {
                 int count = Math.Max(Math.Abs(checkingPiece.X - X), Math.Abs(checkingPiece.Y - Y)) - 1;
-                travelOverFields = travelOverFields.Concat(checkingPiece.X == X
+                travelOverFields = checkingPiece.X == X
                     ? Enumerable.Range(Math.Min(checkingPiece.Y, Y) + 1, count).Select(y => (X, y))
-                    : Enumerable.Range(Math.Min(checkingPiece.X, X) + 1, count).Select(x => (x, Y)));
+                    : Enumerable.Range(Math.Min(checkingPiece.X, X) + 1, count).Select(x => (x, Y));
             }
-            if (checkingPiece is Bishop || checkingPiece is Queen)
+            else if (checkingPiece is Bishop || checkingPiece is Queen)
             {
                 int count = Math.Abs(checkingPiece.Y - Y) - 1;
                 var xValues = Enumerable.Range(Math.Min(checkingPiece.X, X) + 1, count);
                 var yValues = Enumerable.Range(Math.Min(checkingPiece.Y, Y) + 1, count);
-                travelOverFields = travelOverFields.Concat(xValues.Zip(yValues, (x, y) => (x, y)));
+                travelOverFields = xValues.Zip(yValues, (x, y) => (x, y));
             }
             foreach (var tile in travelOverFields)
                 if (board.GetPiecesThatCouldMoveTo(Color, tile.X, tile.Y).Any())
