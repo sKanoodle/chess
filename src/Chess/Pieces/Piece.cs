@@ -49,10 +49,12 @@ namespace Chess.Pieces
                 if (movement == (x, y))
                 {
                     // prevent king from being moved into mate
-                    if (this is King && board.GetPiecesThatCouldMoveTo(Color.Invert(), x, y).Any())
-                        return false;
+                    if (this is King)
+                        return !board.GetPiecesThatCouldMoveTo(Color.Invert(), x, y).Any(); // next check is only for pieces that are not the king, so we can return here
+
                     var king = board.KingOfColor(Color);
                     // prevent move if it would put own king into mate
+                    // we can use king's coordinates here, because this will never check the king's movement
                     if (board.PreviewMove(this, x, y).GetPiecesThatCouldMoveTo(Color.Invert(), king.X, king.Y).Any())
                         return false;
                     return true;
