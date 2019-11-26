@@ -61,9 +61,7 @@ namespace Chess.Pieces
                 var xValues = Enumerable.Range(Math.Min(checkingPiece.X, X) + 1, count);
                 var yValues = Enumerable.Range(Math.Min(checkingPiece.Y, Y) + 1, count);
                 // get X and Y values in the right order
-                if (checkingPiece.X > X)
-                    xValues = xValues.Reverse();
-                if (checkingPiece.Y > Y)
+                if (checkingPiece.X > X != checkingPiece.Y > Y)
                     yValues = yValues.Reverse();
 
                 travelOverFields = xValues.Zip(yValues, (x, y) => (x, y));
