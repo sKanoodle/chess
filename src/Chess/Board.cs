@@ -22,6 +22,8 @@ namespace Chess
         public (int X, int Y) LastMoveOrigin { get; private set; } = (-1, -1);
         public (int X, int Y) LastMoveDestination { get; private set; } = (-1, -1);
 
+        public (int X, int Y) PossibleEnPassantPosition { get; private set; } = (-1, -1);
+
         public Color? Winner { get; private set; }
         public bool IsDraw { get; private set; }
         public bool IsGameOver => IsDraw || Winner != default;
@@ -146,21 +148,34 @@ namespace Chess
 
             if (!piece.CanMoveTo(x, y, this))
                 return false;
-            if (this[x, y] != default)
-                CapturePiece(this[x, y]);
             MovePiece(piece, x, y);
             return true;
         }
 
         private void CapturePiece(Piece piece)
         {
-
+            this[piece.X, piece.Y] = default;
         }
 
         private void MovePiece(Piece piece, int x, int y)
         {
             LastMoveOrigin = (piece.X, piece.Y);
             LastMoveDestination = (x, y);
+            var enPassant = PossibleEnPassantPosition;
+            PossibleEnPassantPosition = (-1, -1);
+
+            if (this[x, y] != default)
+                CapturePiece(this[x, y]);
+
+            if (piece is Pawn)
+            {
+                if ((x, y) == enPassant) // capturing enemy pawn en passant
+                    CapturePiece(this[x, piece.Y]);
+
+                if (Math.Abs(piece.Y - y) == 2) // pawn moved 2 tiles
+                    PossibleEnPassantPosition = (x, Math.Min(piece.Y, y) + 1);
+            }
+
             this[piece.X, piece.Y] = default;
             this[x, y] = piece;
             piece.MoveTo(x, y);
