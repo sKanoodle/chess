@@ -168,7 +168,7 @@ namespace Chess
 
         public void PromotePawn(Piece piece)
         {
-            var pawn = this[piece.X, piece.Y];
+            var pawn = this[piece.X, piece.Y] as Pawn;
             if (pawn == default || pawn.Color != piece.Color
                 || pawn.Color == Color.White && pawn.Y != 7
                 || pawn.Color == Color.Black && pawn.Y != 0)
