@@ -28,7 +28,7 @@ namespace Chess.Pieces
             IEnumerable<(int X, int Y)> getRegularMoves()
             {
                 yield return (X, Y + yMovement);
-                if (!HasMoved)
+                if (!HasMoved && board[X, Y + yMovement] == default)
                     yield return (X, Y + yMovement * 2);
             }
 
