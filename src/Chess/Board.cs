@@ -19,20 +19,36 @@ namespace Chess
             protected set => _Pieces[y * 8 + x] = value;
         }
 
+        public Piece this[(int X, int Y) position]
+        {
+            get => this[position.X, position.Y];
+            protected set => this[position.X, position.Y] = value;
+        }
+
+        public Piece this[string notation]
+        {
+            get => this[ConversionHelpers.NotationToPosition(notation)];
+            protected set => this[ConversionHelpers.NotationToPosition(notation)] = value;
+        }
+
         public (int X, int Y) LastMoveOrigin { get; private set; } = (-1, -1);
         public (int X, int Y) LastMoveDestination { get; private set; } = (-1, -1);
 
-        public (int X, int Y) PossibleEnPassantPosition { get; private set; } = (-1, -1);
+        public (int X, int Y) PossibleEnPassantTarget { get; private set; } = (-1, -1);
+
+        public Color ColorToMoveNext { get; private set; } = Color.White;
+        /// <summary>
+        /// number of halfmoves since the last capture or pawn advance
+        /// </summary>
+        public int HalfmoveClock { get; private set; }
+        /// <summary>
+        /// number of full moves in the game
+        /// </summary>
+        public int FullmoveNumber { get; private set; } = 1;
 
         public Color? Winner { get; private set; }
         public bool IsDraw { get; private set; }
         public bool IsGameOver => IsDraw || Winner != default;
-
-        public Piece this[string position]
-        {
-            get => this[ParseXFromStringPosition(position), ParseYFromStringPosition(position)];
-            set => this[ParseXFromStringPosition(position), ParseYFromStringPosition(position)] = value;
-        }
 
         protected Board(Piece[] pieces)
         {
@@ -91,27 +107,6 @@ namespace Chess
             return KingOfColor(color = Color.Black).IsInCheckmate(this);
         }
 
-        private (int X, int Y) ParseStringPosition(string position)
-        {
-            return (ParseXFromStringPosition(position), ParseYFromStringPosition(position));
-        }
-
-        private int ParseXFromStringPosition(string position)
-        {
-            var c = position[0];
-            if (c < 'a' || c > 'h')
-                throw new ArgumentException();
-            return c - 'a';
-        }
-
-        private int ParseYFromStringPosition(string position)
-        {
-            var c = position[^1];
-            if (c < '1' || c > '8')
-                throw new ArgumentException();
-            return c - '1';
-        }
-
         public Board PreviewMove(Piece piece, int x, int y)
         {
             // only move piece in array, dont modify position in piece (piece in copied array is still the same piece as in source array)
@@ -124,6 +119,9 @@ namespace Chess
 
         public bool TryMovePiece(Piece piece, int x, int y)
         {
+            if (piece.Color != ColorToMoveNext)
+                return false;
+
             if (piece is King king && y == king.Y && (x == king.X - 2 || x == king.X + 2)) // castling requested
             {
                 if (king.HasMoved || king.IsInCheck(this, out _))
@@ -141,7 +139,7 @@ namespace Chess
                         return false; // king may not move through or into check
 
                 int rookDestinationX = king.X + (rook.X < king.X ? -1 : 1);
-                MovePiece(rook, rookDestinationX, y);
+                MovePieceInternal(rook, rookDestinationX, y);
                 MovePiece(king, x, y);
                 return true;
             }
@@ -159,10 +157,14 @@ namespace Chess
 
         private void MovePiece(Piece piece, int x, int y)
         {
-            LastMoveOrigin = (piece.X, piece.Y);
+            LastMoveOrigin = piece.Position;
             LastMoveDestination = (x, y);
-            var enPassant = PossibleEnPassantPosition;
-            PossibleEnPassantPosition = (-1, -1);
+            var enPassant = PossibleEnPassantTarget;
+            PossibleEnPassantTarget = (-1, -1);
+
+            HalfmoveClock += 1;
+            if (this[x, y] != default || piece is Pawn) // piece will be captured or pawn is moved
+                HalfmoveClock = 0;
 
             if (this[x, y] != default)
                 CapturePiece(this[x, y]);
@@ -173,10 +175,19 @@ namespace Chess
                     CapturePiece(this[x, piece.Y]);
 
                 if (Math.Abs(piece.Y - y) == 2) // pawn moved 2 tiles
-                    PossibleEnPassantPosition = (x, Math.Min(piece.Y, y) + 1);
+                    PossibleEnPassantTarget = (x, Math.Min(piece.Y, y) + 1);
             }
 
-            this[piece.X, piece.Y] = default;
+            MovePieceInternal(piece, x, y);
+
+            if (ColorToMoveNext == Color.Black)
+                FullmoveNumber += 1;
+            ColorToMoveNext = ColorToMoveNext.Invert();
+        }
+
+        private void MovePieceInternal(Piece piece, int x, int y)
+        {
+            this[piece.Position] = default;
             this[x, y] = piece;
             piece.MoveTo(x, y);
         }
@@ -212,11 +223,11 @@ namespace Chess
             return PiecesByColor(color).Where(p => p.CanMoveTo(x, y, this, isOnlyCheckDetection));
         }
 
-        public bool TryPerformAlgebraicChessNotationMove(Color color, string notation)
+        public bool TryPerformAlgebraicChessNotationMove(string notation)
         {
             try
             {
-                PerformAlgebraicChessNotationMove(color, notation);
+                PerformAlgebraicChessNotationMove(notation);
             }
             catch
             {
@@ -231,8 +242,10 @@ namespace Chess
         private const string BlackWon = "0-1";
         private const string Draw = "½-½";
 
-        public void PerformAlgebraicChessNotationMove(Color color, string notation)
+        public void PerformAlgebraicChessNotationMove(string notation)
         {
+            var color = ColorToMoveNext;
+
             if (notation == WhiteWon || notation == BlackWon || notation == Draw)
             {
                 switch (notation)
@@ -267,15 +280,15 @@ namespace Chess
                 _ => _pieces.OfType<Pawn>(),
             };
 
-            (var x, var y) = ParseStringPosition(match.Groups["destination"].Value);
+            (var x, var y) = ConversionHelpers.NotationToPosition(match.Groups["destination"].Value);
 
             var pieces = _pieces.Where(p => p.CanMoveTo(x, y, this)).ToArray();
             if (!pieces.Any())
                 throw new ArgumentException("no piece can move to this position");
 
             (var sourceX, var sourceY) = (match.Groups["sourceX"].Value, match.Groups["sourceY"].Value);
-            pieces = pieces.Where(p => (string.IsNullOrEmpty(sourceX) || p.X == ParseXFromStringPosition(sourceX))
-                && (string.IsNullOrEmpty(sourceY) || p.Y == ParseYFromStringPosition(sourceY))).ToArray();
+            pieces = pieces.Where(p => (string.IsNullOrEmpty(sourceX) || p.X == ConversionHelpers.NotationToX(sourceX))
+                && (string.IsNullOrEmpty(sourceY) || p.Y == ConversionHelpers.NotationToY(sourceY))).ToArray();
 
             if (!pieces.Any())
                 throw new ArgumentException("no piece matches the source of movement");
@@ -296,6 +309,69 @@ namespace Chess
                     'B' => new Bishop(color, x, y),
                     _ => throw new ArgumentException("promotion to this piece is not defined")
                 });
+        }
+
+        public string GetForsythEdwardsNotation()
+        {
+            string makeRow(int y)
+            {
+                StringBuilder row = new StringBuilder();
+                int emptyFields = 0;
+                for (int x = 0; x < 8; x++)
+                {
+                    var piece = this[x, y];
+                    if (piece == default)
+                    {
+                        emptyFields += 1;
+                        continue;
+                    }
+                    if (emptyFields > 0)
+                    {
+                        row.Append(emptyFields);
+                        emptyFields = 0;
+                    }
+                    var pieceAbbreviation = piece switch
+                    {
+                        Pawn _ => "p",
+                        Rook _ => "r",
+                        Knight _ => "n",
+                        Bishop _ => "b",
+                        Queen _ => "q",
+                        King _ => "k",
+                        _ => throw new NotImplementedException(),
+                    };
+                    if (piece.Color == Color.White)
+                        pieceAbbreviation = pieceAbbreviation.ToUpper();
+                    row.Append(pieceAbbreviation);
+                }
+                if (emptyFields > 0)
+                    row.Append(emptyFields);
+                return row.ToString();
+            }
+
+            bool CanCastle(string rookPosition)
+            {
+                var pos = ConversionHelpers.NotationToPosition(rookPosition);
+                var rook = this[pos] as Rook;
+                var king = this[4, pos.Y] as King;
+                if (rook == default || rook.HasMoved)
+                    return false;
+                if (king == default || king.HasMoved)
+                    return false;
+                return true;
+            }
+
+            var board = string.Join('/', Enumerable.Range(0, 8).Reverse().Select(makeRow));
+
+            var possibleCastles = string.Join("", new (string Position, string Notation)[] { ("h1", "K"), ("a1", "Q"), ("h8", "k"), ("h1", "q") }
+                .Where(p => CanCastle(p.Position))
+                .Select(p => p.Notation));
+            if (string.IsNullOrEmpty(possibleCastles))
+                possibleCastles = "-";
+
+            var enPassant = PossibleEnPassantTarget != (-1, -1) ? ConversionHelpers.PositionToNotation(PossibleEnPassantTarget) : "-";
+
+            return $"{board} {(ColorToMoveNext == Color.Black ? "b" : "w")} {possibleCastles} {enPassant} {HalfmoveClock} {FullmoveNumber}";
         }
     }
 }

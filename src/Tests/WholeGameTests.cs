@@ -39,15 +39,12 @@ namespace Tests
             var moves = moveSource.Split('.').ToArray();
             var board = TestBoard.PopulatedDefault();
 
-            var colorTurn = Color.White;
             int turn = 0;
-
             while (!board.CheckForEndOfGame())
             {
                 Assert.IsTrue(turn < moves.Length, "game is still going despite there being no more moves");
                 var move = moves[turn];
-                Assert.IsTrue(board.TryPerformAlgebraicChessNotationMove(colorTurn, move), $"move failed to execute [{turn}: {move}]");
-                colorTurn = colorTurn.Invert();
+                Assert.IsTrue(board.TryPerformAlgebraicChessNotationMove(move), $"move failed to execute [{turn}: {move}]");
                 turn += 1;
             }
             if (!moves[turn - 1].EndsWith('#'))

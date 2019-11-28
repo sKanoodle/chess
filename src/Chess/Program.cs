@@ -1,4 +1,4 @@
-﻿using Chess.Pieces;
+using Chess.Pieces;
 using System;
 using System.Linq;
 
@@ -79,18 +79,14 @@ namespace Chess
 
         private static void PlayWhatever(Func<int, string> getNextMove)
         {
-            var colorTurn = Color.White;
             int turn = 1;
-
             while (!Board.CheckForEndOfGame())
             {
                 RenderBoard();
+                Console.WriteLine($"move {turn}:");
                 var nextMove = getNextMove(turn);
-                if (Board.TryPerformAlgebraicChessNotationMove(colorTurn, nextMove))
-                {
-                    colorTurn = colorTurn.Invert();
+                if (Board.TryPerformAlgebraicChessNotationMove(nextMove))
                     turn += 1;
-                }
             }
             RenderBoard();
             Console.WriteLine($"{Board.Winner} won!");
@@ -143,6 +139,7 @@ namespace Chess
                 }
                 Console.WriteLine();
             }
+            Console.WriteLine(Board.GetForsythEdwardsNotation() + "                                   ");
         }
     }
 }

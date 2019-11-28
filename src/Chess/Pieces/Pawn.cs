@@ -36,7 +36,7 @@ namespace Chess.Pieces
             foreach (var movement in getCaptureMoves())
                 if (IsInBounds(movement.X, movement.Y) 
                     && ((tempPiece = board[movement.X, movement.Y]) != default && tempPiece.Color == Color.Invert()
-                        || board.PossibleEnPassantPosition == movement))
+                        || board.PossibleEnPassantTarget == movement))
                     yield return movement;
             foreach (var movement in getRegularMoves())
                 if (IsInBounds(movement.X, movement.Y) && board[movement.X, movement.Y] == default)

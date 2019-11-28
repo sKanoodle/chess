@@ -13,19 +13,10 @@ namespace Chess.Pieces
         public Color Color { get; }
         public bool HasMoved { get; private set; } = false;
 
-        public string Rank => (Y + 1).ToString();
-        public string File => X switch
-        {
-            0 => "a",
-            1 => "b",
-            2 => "c",
-            3 => "d",
-            4 => "e",
-            5 => "f",
-            6 => "g",
-            7 => "h",
-        };
-        public string Position => File + Rank;
+        public string Rank => ConversionHelpers.YToRank(Y);
+        public string File => ConversionHelpers.XToFile(X);
+        public string Notation => ConversionHelpers.PositionToNotation(X, Y);
+        public (int X, int Y) Position => (X, Y);
 
         public Piece(Color color, int x, int y)
         {
