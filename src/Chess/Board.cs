@@ -223,16 +223,30 @@ namespace Chess
             return PiecesByColor(color).Where(p => p.CanMoveTo(x, y, this, isOnlyCheckDetection));
         }
 
+        public bool TryPerformCoordinateNotationMove(string notation)
+        {
+            try { PerformCoordinateNotationMove(notation); }
+            catch { return false; }
+            return true;
+        }
+
+        public void PerformCoordinateNotationMove(string notation)
+        {
+            var match = Regex.Match(notation, "^([a-h][1-8])([a-h][1-8])$");
+            if (!match.Success)
+                throw new ArgumentException("could not parse notation");
+            var piece = this[match.Groups[1].Value];
+            if (piece == default || piece.Color != ColorToMoveNext)
+                throw new ArgumentException("no piece at starting position or it is not the color's turn");
+            (int x, int y) = ConversionHelpers.NotationToPosition(match.Groups[2].Value);
+            if (!TryMovePiece(piece, x, y))
+                throw new ArgumentException("piece could not perform move");
+        }
+
         public bool TryPerformAlgebraicChessNotationMove(string notation)
         {
-            try
-            {
-                PerformAlgebraicChessNotationMove(notation);
-            }
-            catch
-            {
-                return false;
-            }
+            try { PerformAlgebraicChessNotationMove(notation); }
+            catch { return false; }
             return true;
         }
 

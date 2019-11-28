@@ -11,7 +11,7 @@ namespace Chess
         static void Main(string[] args)
         {
             Board = new Board();
-            ReplayGame();
+            PlayVsEngine();
         }
 
         private static void ReplayGame()
@@ -27,6 +27,33 @@ namespace Chess
             PlayWhatever(_ => Console.ReadLine());
         }
 
+        private const string StockfishPath = @"F:\stockfish_10_x64.exe";
+        private static void PlayVsEngine()
+        {
+            var engineColor = Color.Black;
+            var startInfo = new System.Diagnostics.ProcessStartInfo(StockfishPath)
+            {
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+            };
+            using var engineProc = System.Diagnostics.Process.Start(startInfo);
+
+            PlayWhatever(_ =>
+            {
+                if (Board.ColorToMoveNext == engineColor)
+                {
+                    engineProc.StandardInput.WriteLine($"position fen {Board.GetForsythEdwardsNotation()}");
+                    engineProc.StandardInput.WriteLine("go");
+                    string output;
+                    while (!(output = engineProc.StandardOutput.ReadLine()).StartsWith("bestmove")) ;
+                    return output.Split(' ')[1];
+                }
+                else
+                    return Console.ReadLine();
+            });
+
+        }
+
         private static void PlayWhatever(Func<int, string> getNextMove)
         {
             int turn = 1;
@@ -35,7 +62,7 @@ namespace Chess
                 RenderBoard();
                 Console.WriteLine($"move {turn}:");
                 var nextMove = getNextMove(turn);
-                if (Board.TryPerformAlgebraicChessNotationMove(nextMove))
+                if (Board.TryPerformCoordinateNotationMove(nextMove) || Board.TryPerformAlgebraicChessNotationMove(nextMove))
                     turn += 1;
             }
             RenderBoard();
