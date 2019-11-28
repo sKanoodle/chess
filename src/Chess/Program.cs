@@ -1,4 +1,4 @@
-using Chess.Pieces;
+﻿using Chess.Pieces;
 using System;
 using System.Linq;
 
@@ -16,59 +16,9 @@ namespace Chess
 
         private static void ReplayGame()
         {
-            var moves = new[]
-            {
-                "e4",
-                "d5",
-                "exd5",
-                "Qxd5",
-                "Nc3",
-                "Qa5",
-                "d4",
-                "Nf6",
-                "Nf3",
-                "c6",
-                "Bc4",
-                "Bf5",
-                "Ne5",
-                "e6",
-                "g4",
-                "Bg6",
-                "h4",
-                "Nbd7",
-                "Nxd7",
-                "Nxd7",
-                "h5",
-                "Be4",
-                "Rh3",
-                "Bg2",
-                "Re3",
-                "Nb6",
-                "Bd3",
-                "Nd5",
-                "f3",
-                "Bb4",
-                "Kf2",
-                "Bxc3",
-                "bxc3",
-                "Qxc3",
-                "Rb1",
-                "Qxd4",
-                "Rxb7",
-                "Rd8",
-                "h6",
-                "gxh6",
-                "Bg6",
-                "Ne7",
-                "Qxd4",
-                "Rxd4",
-                "Rd3",
-                "Rd8",
-                "Rxd8+",
-                "Kxd8",
-                "Bd3",
-                "1-0",
-            };
+            // https://www.chessgames.com/perl/chessgame?gid=1060694
+            var moveString = "d4.Nf6.c4.e6.Nf3.d5.g3.Bb4+.Bd2.Be7.Bg2.O-O.O-O.c6.Bf4.b6.Nc3.Ba6.cxd5.cxd5.Rc1.Nc6.Nxd5.Qxd5.Ne5.Nxd4.Bxd5.Nxe2+.Qxe2.Bxe2.Bxa8.Rxa8.Rfe1.Bb5.Rc2.Nd5.Rec1.Bc5.Bd2.f6.b4.Bf8.Ng4.Rd8.Rc8.Rd7.Nh6+.gxh6.Bxh6.Rf7.Rd8.Ne7.Rc7.Ng6.Rcc8.e5.f4.Bd7.Ra8.Bh3.Kf2.b5.Rdb8.exf4.gxf4.Bd7.h4.Bc6.h5.Bxa8.hxg6.hxg6.Rxa8.f5.Kg3.a6.Kh4.Rg7.Kg5.1-0";
+            var moves = moveString.Split('.').ToArray();
             PlayWhatever(i => { Console.ReadKey(false); return moves[i - 1]; });
         }
 
