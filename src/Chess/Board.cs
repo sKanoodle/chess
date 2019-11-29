@@ -48,7 +48,8 @@ namespace Chess
 
         public Color? Winner { get; private set; }
         public bool IsDraw { get; private set; }
-        public bool IsGameOver => IsDraw || Winner != default;
+        public bool WinnerIsUnkown { get; private set; }
+        public bool IsGameOver => IsDraw || WinnerIsUnkown || Winner != default;
 
         protected Board(Piece[] pieces)
         {
@@ -59,6 +60,21 @@ namespace Chess
         public Board()
         {
             BuildStartingBoard();
+        }
+
+        private Board Clone()
+        {
+            return new Board(_Pieces.ToArray())
+            {
+                ColorToMoveNext = ColorToMoveNext,
+                FullmoveNumber = FullmoveNumber,
+                HalfmoveClock = HalfmoveClock,
+                IsDraw = IsDraw,
+                LastMoveDestination = LastMoveDestination,
+                LastMoveOrigin = LastMoveOrigin,
+                Winner = Winner,
+                PossibleEnPassantTarget = PossibleEnPassantTarget,
+            };
         }
 
         protected void BuildStartingBoard()
@@ -111,9 +127,8 @@ namespace Chess
         {
             // only move piece in array, dont modify position in piece (piece in copied array is still the same piece as in source array)
             // should be no problem, because all relevant checks that this is used for only rely on position in array
-            var result = new Board(_Pieces.ToArray());
-            result[piece.X, piece.Y] = default;
-            result[x, y] = piece;
+            var result = Clone();
+            result.MovePiece(piece, x, y, false);
             return result;
         }
 
@@ -155,7 +170,8 @@ namespace Chess
             this[piece.X, piece.Y] = default;
         }
 
-        private void MovePiece(Piece piece, int x, int y)
+        /// <param name="moveActualPiece">whether to set move target coordinates in the piece, otherwise just move piece in the array without changing the piece</param>
+        private void MovePiece(Piece piece, int x, int y, bool moveActualPiece = true)
         {
             LastMoveOrigin = piece.Position;
             LastMoveDestination = (x, y);
@@ -178,18 +194,20 @@ namespace Chess
                     PossibleEnPassantTarget = (x, Math.Min(piece.Y, y) + 1);
             }
 
-            MovePieceInternal(piece, x, y);
+            MovePieceInternal(piece, x, y, moveActualPiece);
 
             if (ColorToMoveNext == Color.Black)
                 FullmoveNumber += 1;
             ColorToMoveNext = ColorToMoveNext.Invert();
         }
 
-        private void MovePieceInternal(Piece piece, int x, int y)
+        /// <param name="moveActualPiece">whether to set move target coordinates in the piece, otherwise just move piece in the array without changing the piece</param>
+        private void MovePieceInternal(Piece piece, int x, int y, bool moveActualPiece = true)
         {
             this[piece.Position] = default;
             this[x, y] = piece;
-            piece.MoveTo(x, y);
+            if (moveActualPiece)
+                piece.MoveTo(x, y);
         }
 
         public void PromotePawn(Piece piece)
@@ -254,26 +272,31 @@ namespace Chess
         private readonly string[] QueenSideCastle = new[] { "0-0-0", "O-O-O" };
         private const string WhiteWon = "1-0";
         private const string BlackWon = "0-1";
-        private const string Draw = "½-½";
+        private readonly string[] Draw = new[] { "½-½", "1/2-1/2" };
+        private const string WinnerUnknown = "*";
 
         public void PerformAlgebraicChessNotationMove(string notation)
         {
             var color = ColorToMoveNext;
+            bool isKingSideCastle = KingSideCastle.Any(s => notation.StartsWith(s));
+            bool isQueenSideCastle = QueenSideCastle.Any(s => notation.StartsWith(s));
 
-            if (notation == WhiteWon || notation == BlackWon || notation == Draw)
+            if (notation == WhiteWon || notation == BlackWon || Draw.Contains(notation) || notation == WinnerUnknown)
             {
                 switch (notation)
                 {
                     case WhiteWon: Winner = Color.White; return;
                     case BlackWon: Winner = Color.Black; return;
-                    case Draw: IsDraw = true; return;
+                    case WinnerUnknown: WinnerIsUnkown = true; return;
+                    case string _ when Draw.Contains(notation): IsDraw = true; return;
                 }
             }
 
-            if (KingSideCastle.Contains(notation) || QueenSideCastle.Contains(notation))
+            if (isKingSideCastle || isQueenSideCastle)
             {
                 var piece = KingOfColor(color);
-                if (!TryMovePiece(piece, piece.X + (KingSideCastle.Contains(notation) ? 2 : -2), piece.Y))
+                // definitely have to ask for queenSide castle first, because of startsWith check, kingSideCastle is true when queenSideCastle is requested
+                if (!TryMovePiece(piece, piece.X + (isQueenSideCastle ? -2 : 2), piece.Y))
                     throw new ArgumentException("castling failed");
                 return;
             }

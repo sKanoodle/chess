@@ -17,4 +17,10 @@
     <ProjectReference Include="..\Chess\Chess.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="many_games.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

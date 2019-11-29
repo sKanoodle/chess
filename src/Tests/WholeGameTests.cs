@@ -36,6 +36,19 @@ namespace Tests
         [DataRow("d4.Nf6.c4.e6.Nf3.b6.g3.Ba6.b3.Bb4+.Bd2.Be7.Bg2.c6.Bc3.d5.Ne5.Nfd7.Nxd7.Nxd7.Nd2.O-O.O-O.Nf6.e4.b5.exd5.exd5.Re1.Rb8.c5.Bc8.Nf3.Ne4.Rxe4.dxe4.Ne5.Qd5.Qe1.Bf5.g4.Bg6.f3.b4.fxe4.Qe6.Bb2.Bf6.Nxc6.Qxc6.e5.Qa6.exf6.Rfe8.Qf1.Qe2.Qf2.Qxg4.h3.Qg5.Bc1.Qh5.Bf4.Rbd8.c6.Be4.c7.Rc8.Re1.Qg6.Rxe4.Rxe4.d5.Rce8.d6.Re1+.Kh2.Qf5.Qg3.g6.Qg5.Qxg5.Bxg5.Rd1.Bc6.Re2+.Kg3.1-0", DisplayName = "https://www.chessgames.com/perl/chessgame?gid=1387655")]
         public void TestGame(string moveSource)
         {
+            TestGameInternal(moveSource);
+        }
+
+        [TestMethod]
+        public void TestManyGames()
+        {
+            var games = System.IO.File.ReadLines("many_games.txt");
+            foreach (var game in games)
+                TestGameInternal(game, true);
+        }
+
+        private void TestGameInternal(string moveSource, bool sourceUsesCheckInsteadOfCheckmate = false)
+        {
             var moves = moveSource.Split('.').ToArray();
             var board = TestBoard.PopulatedDefault();
 
@@ -47,7 +60,8 @@ namespace Tests
                 Assert.IsTrue(board.TryPerformAlgebraicChessNotationMove(move), $"move failed to execute [{turn}: {move}]");
                 turn += 1;
             }
-            if (!moves[turn - 1].EndsWith('#'))
+            string LastMove = moves[turn - 1];
+            if (!(LastMove.EndsWith('#') || sourceUsesCheckInsteadOfCheckmate && LastMove.EndsWith('+')))
                 Assert.IsTrue(turn == moves.Length, $"game ended prematurely [{turn} / {moves.Length}]");
         }
     }
