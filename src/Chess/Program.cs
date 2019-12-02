@@ -17,7 +17,7 @@ namespace Chess
         private static void ReplayGame()
         {
             // https://www.chessgames.com/perl/chessgame?gid=1060694
-            var moveString = "d4.Nf6.c4.e6.Nf3.d5.g3.Bb4+.Bd2.Be7.Bg2.O-O.O-O.c6.Bf4.b6.Nc3.Ba6.cxd5.cxd5.Rc1.Nc6.Nxd5.Qxd5.Ne5.Nxd4.Bxd5.Nxe2+.Qxe2.Bxe2.Bxa8.Rxa8.Rfe1.Bb5.Rc2.Nd5.Rec1.Bc5.Bd2.f6.b4.Bf8.Ng4.Rd8.Rc8.Rd7.Nh6+.gxh6.Bxh6.Rf7.Rd8.Ne7.Rc7.Ng6.Rcc8.e5.f4.Bd7.Ra8.Bh3.Kf2.b5.Rdb8.exf4.gxf4.Bd7.h4.Bc6.h5.Bxa8.hxg6.hxg6.Rxa8.f5.Kg3.a6.Kh4.Rg7.Kg5.1-0";
+            var moveString = "d4.Nf6.c4.e6.Nc3.Bb4.e3.d5.a3.Bxc3+.bxc3.c5.cxd5.exd5.Bd3.O-O.Ne2.b6.O-O.Ba6.Bxa6.Nxa6.Bb2.Qd7.a4.Rfe8.Qd3.c4.Qc2.Nb8.Rae1.Nc6.Ng3.Na5.f3.Nb3.e4.Qxa4.e5.Nd7.Qf2.g6.f4.f5.exf6.Nxf6.f5.Rxe1.Rxe1.Re8.Re6.Rxe6.fxe6.Kg7.Qf4.Qe8.Qe5.Qe7.Ba3.Qxa3.Nh5+.gxh5.Qg5+.Kf8.Qxf6+.Kg8.e7.Qc1+.Kf2.Qc2+.Kg3.Qd3+.Kh4.Qe4+.Kxh5.Qe2+.Kh4.Qe4+.g4.Qe1+.Kh5.1-0";
             var moves = moveString.Split('.').ToArray();
             PlayWhatever(i => { Console.ReadKey(false); return moves[i - 1]; });
         }
@@ -31,23 +31,12 @@ namespace Chess
         private static void PlayVsEngine()
         {
             var engineColor = Color.Black;
-            var startInfo = new System.Diagnostics.ProcessStartInfo(StockfishPath)
-            {
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-            };
-            using var engineProc = System.Diagnostics.Process.Start(startInfo);
+            IEngine engine = new StockfishEngine(StockfishPath);
 
             PlayWhatever(_ =>
             {
                 if (Board.ColorToMoveNext == engineColor)
-                {
-                    engineProc.StandardInput.WriteLine($"position fen {Board.GetForsythEdwardsNotation()}");
-                    engineProc.StandardInput.WriteLine("go");
-                    string output;
-                    while (!(output = engineProc.StandardOutput.ReadLine()).StartsWith("bestmove")) ;
-                    return output.Split(' ')[1];
-                }
+                    return engine.GetMove(Board.GetForsythEdwardsNotation());
                 else
                     return Console.ReadLine();
             });
